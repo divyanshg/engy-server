@@ -1,5 +1,10 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Request } from 'express';
 
+import {
+    Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards
+} from '@nestjs/common';
+
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { OutputData, transformData } from '../utils/lib';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { RoomService } from './room.service';
@@ -8,10 +13,15 @@ import { RoomService } from './room.service';
 export class RoomController {
   constructor(private readonly roomService: RoomService) {}
 
+  @UseGuards(JwtAuthGuard)
   @Post('create')
-  async create(@Body() createRoomDto: CreateRoomDto) {
+  async create(@Body() createRoomDto: CreateRoomDto, @Req() { user }: Request) {
     try {
-      const createdRoom = await this.roomService.create(createRoomDto);
+      console.log('User', user);
+      const createdRoom = await this.roomService.create({
+        ...createRoomDto,
+        ownerId: user.userId,
+      });
       return {
         code: 201,
         message: 'Room created successfully',
@@ -25,10 +35,11 @@ export class RoomController {
     }
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get('list')
-  async findAll() {
+  async findAll(@Req() { user }: Request) {
     try {
-      const rooms = await this.roomService.findAll();
+      const rooms = await this.roomService.findAll(user.userId);
       return {
         code: 200,
         data: rooms,
@@ -41,15 +52,19 @@ export class RoomController {
     }
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get('read/:id')
-  async findOne(@Param('id') id: string): Promise<{
+  async findOne(
+    @Param('id') id: string,
+    @Req() { user }: Request,
+  ): Promise<{
     code: number;
     message: string;
     data?: OutputData;
   }> {
     // Use OutputData as the return type
     try {
-      const room = await this.roomService.findOne(id);
+      const room = await this.roomService.findOne(id, user.userId);
       if (!room) {
         return {
           code: 404,

@@ -2,11 +2,18 @@ import * as NodeMediaServer from 'node-media-server';
 
 import { Module, OnModuleInit } from '@nestjs/common';
 
-@Module({})
+import { PrismaService } from '../prisma/prisma.service';
+import { RoomModule } from '../room/room.module';
+import { RoomService } from '../room/room.service';
+
+@Module({
+  imports: [RoomModule],
+  providers: [RoomService, PrismaService],
+})
 export class MediaServerModule implements OnModuleInit {
   private readonly nms: NodeMediaServer;
 
-  constructor() {
+  constructor(private roomService: RoomService) {
     this.nms = new NodeMediaServer({
       rtmp: {
         port: 1935,
@@ -19,20 +26,30 @@ export class MediaServerModule implements OnModuleInit {
         port: 8000,
         allow_origin: '*',
       },
+      auth: {
+        api: true,
+        api_user: 'admin',
+        api_pass: 'dg2024',
+      },
     });
   }
 
   onModuleInit() {
-    this.nms.on('prePublish', (id, StreamPath, args) => {
-      console.log(
-        '[NodeEvent on prePublish]',
-        `id=${id} StreamPath=${StreamPath.split('/')[2]} args=${JSON.stringify(args)}`,
-      );
-      const session = this.nms.getSession(id);
-      /* `session.reject();` is a method call that rejects the publishing of a stream. In the context
-    of this code, it is called inside the `prePublish` event listener of the NodeMediaServer
-    instance. */
-      //   session.reject();
+    this.nms.on('prePublish', async (id, StreamPath, args) => {
+      const roomId = StreamPath.split('/')[2];
+      const apiKey = args.key;
+
+      if (!apiKey || !roomId) {
+        const session = this.nms.getSession(id);
+        session.reject();
+      }
+
+      const room = await this.roomService.findByKey(apiKey, roomId);
+
+      if (!room) {
+        const session = this.nms.getSession(id);
+        session.reject();
+      }
     });
 
     this.nms.run();

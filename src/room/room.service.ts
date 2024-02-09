@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateRoomDto } from './dto/create-room.dto';
-import { UpdateRoomDto } from './dto/update-room.dto';
 
 @Injectable()
 export class RoomService {
@@ -11,20 +10,26 @@ export class RoomService {
     const newRoom = await this.prisma.room.create({
       data: {
         name: createRoomDto.name,
+        ownerId: createRoomDto.ownerId,
       },
     });
 
     return newRoom;
   }
 
-  async findAll() {
-    return await this.prisma.room.findMany();
+  async findAll(ownerId: string) {
+    return await this.prisma.room.findMany({
+      where: {
+        ownerId,
+      },
+    });
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, ownerId: string) {
     return await this.prisma.room.findUnique({
       where: {
         id,
+        ownerId,
       },
       include: {
         properties: {
@@ -32,6 +37,17 @@ export class RoomService {
             values: true,
           },
         },
+      },
+    });
+  }
+
+  async findByKey(apiKey: string, room_id: string) {
+    return await this.prisma.room.findUnique({
+      where: {
+        owner: {
+          apiKey,
+        },
+        id: room_id,
       },
     });
   }

@@ -37,15 +37,32 @@ export class PropertyService {
     });
   }
 
+  async propertyExists(roomId: string, name: string) {
+    return await this.prisma.property.findMany({
+      where: {
+        roomId,
+        name,
+      },
+    });
+  }
+
   async update(roomId: string, name: string, value: string) {
     this.gateway.server.to(roomId).emit('data', {
       time: new Date().toISOString(),
       [name]: value,
     });
-    return await this.prisma.property.update({
+
+    const property = await this.prisma.property.findMany({
       where: {
         roomId,
         name,
+      },
+    });
+
+    return await this.prisma.property.update({
+      where: {
+        roomId,
+        id: property[0].id,
       },
       data: {
         values: {

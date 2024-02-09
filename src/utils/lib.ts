@@ -1,3 +1,5 @@
+import * as crypto from 'crypto';
+
 export interface InputData {
   id: string;
   name: string;
@@ -66,4 +68,14 @@ export function transformData(inputData: InputData): OutputData {
     updatedAt: data.updatedAt,
     properties: transformedProperties.flat(),
   };
+}
+
+export function generateApiKey(email) {
+  const salt = crypto.randomBytes(16).toString('hex');
+  const hash = crypto
+    .createHash('sha256')
+    .update(email + salt)
+    .digest('hex');
+
+  return `mr_${hash}`;
 }

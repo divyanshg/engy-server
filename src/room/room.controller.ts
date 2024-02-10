@@ -17,7 +17,6 @@ export class RoomController {
   @Post('create')
   async create(@Body() createRoomDto: CreateRoomDto, @Req() { user }: Request) {
     try {
-      console.log('User', user);
       const createdRoom = await this.roomService.create({
         ...createRoomDto,
         ownerId: user.userId,

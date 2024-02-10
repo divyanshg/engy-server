@@ -37,7 +37,14 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Get('profile')
-  getProfile(@Request() req) {
-    return req.user;
+  async getProfile(@Request() req) {
+    try {
+      const user = await this.authService.getUser(req.user.userId);
+
+      return new ApiResponse(200, 'User profile', user);
+    } catch (err) {
+      console.log(err);
+      return new ApiResponse(500, 'Internal server error', null);
+    }
   }
 }

@@ -11,6 +11,11 @@ export class RoomService {
       data: {
         name: createRoomDto.name,
         ownerId: createRoomDto.ownerId,
+        properties: {
+          create: {
+            name: 'occupants',
+          },
+        },
       },
     });
 

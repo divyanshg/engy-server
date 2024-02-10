@@ -52,4 +52,8 @@ export class AuthService {
 
     return new ApiResponse(201, 'User created successfully', createdUser);
   }
+
+  async getUser(id: string) {
+    return this.usersService.findOne({ id });
+  }
 }

@@ -18,7 +18,17 @@ model Room {
   properties Property[]
   owner      User       @relation(fields: [ownerId], references: [id])
   ownerId    String     @db.ObjectId
+  // layout     Layout     @relation(fields: [layoutId], references: [id])
+  // layoutId   String     @db.ObjectId
 }
+
+// model Layout {
+//   id        String   @id @default(auto()) @map("_id") @db.ObjectId
+//   name      String
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+//   rooms     Room[]
+// }
 
 model Property {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId

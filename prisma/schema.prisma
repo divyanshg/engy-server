@@ -50,13 +50,14 @@ model Values {
 }
 
 model User {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  email     String   @unique
-  password  String
-  name      String
-  picture   String   @default("https://st3.depositphotos.com/6672868/13701/v/450/depositphotos_137014128-stock-illustration-user-profile-icon.jpg")
-  apiKey    String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  Room      Room[]
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  email      String   @unique
+  password   String
+  name       String
+  picture    String   @default("https://st3.depositphotos.com/6672868/13701/v/450/depositphotos_137014128-stock-illustration-user-profile-icon.jpg")
+  apiKey     String   @unique
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  Room       Room[]
+  room_count Int      @default(0)
 }

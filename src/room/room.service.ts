@@ -19,15 +19,74 @@ export class RoomService {
       },
     });
 
+    await this.prisma.user.update({
+      where: {
+        id: createRoomDto.ownerId,
+      },
+      data: {
+        room_count: {
+          increment: 1,
+        },
+      },
+    });
+
     return newRoom;
   }
 
-  async findAll(ownerId: string) {
-    return await this.prisma.room.findMany({
+  async createMany(createRoomsDto: CreateRoomDto[]) {
+    console.log(createRoomsDto);
+    const newRooms = await this.prisma.room.createMany({
+      data: createRoomsDto.map((createRoomDto) => ({
+        name: createRoomDto.name,
+        ownerId: createRoomDto.ownerId,
+        properties: {
+          create: {
+            name: 'occupants',
+          },
+        },
+      })),
+    });
+
+    await this.prisma.user.update({
+      where: {
+        id: createRoomsDto[0].ownerId,
+      },
+      data: {
+        room_count: {
+          increment: createRoomsDto.length,
+        },
+      },
+    });
+
+    return newRooms;
+  }
+
+  async findAll(ownerId: string, params: { skip?: number; take?: number }) {
+    const rooms = await this.prisma.room.findMany({
+      ...params,
       where: {
         ownerId,
       },
     });
+
+    const { room_count } = await this.prisma.user.findUnique({
+      where: {
+        id: ownerId,
+      },
+      select: {
+        room_count: true,
+      },
+    });
+
+    const total_pages = Math.ceil(room_count / (params.take || 10));
+
+    return {
+      total_pages,
+      page: Math.ceil(params.skip / params.take) + 1,
+      per_page: params.take,
+      total: room_count,
+      data: rooms,
+    };
   }
 
   async findOne(id: string, ownerId: string) {
@@ -69,6 +128,16 @@ export class RoomService {
   // }
 
   async remove(id: string) {
+    await this.prisma.user.update({
+      where: {
+        id: id,
+      },
+      data: {
+        room_count: {
+          decrement: 1,
+        },
+      },
+    });
     return await this.prisma.room.delete({
       where: {
         id,

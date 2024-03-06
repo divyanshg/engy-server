@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { PaginatedQuery } from '../types';
 import { OutputData, transformData } from '../utils/lib';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { RoomService } from './room.service';
@@ -35,13 +36,41 @@ export class RoomController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get('list')
-  async findAll(@Req() { user }: Request) {
+  @Post('create-many')
+  async createMany(
+    @Body('rooms') createRoomsDto: CreateRoomDto[],
+    @Req() { user }: Request,
+  ) {
     try {
-      const rooms = await this.roomService.findAll(user.userId);
+      const roomsToCreate = createRoomsDto.map((createRoomDto) => ({
+        ...createRoomDto,
+        ownerId: user.userId,
+      }));
+      await this.roomService.createMany(roomsToCreate);
+      return {
+        code: 201,
+        message: 'Rooms created successfully',
+        data: null,
+      };
+    } catch (e) {
+      console.log(e);
+      return {
+        code: 500,
+        message: e.message,
+      };
+    }
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('list')
+  async findAll(@Req() { user }: Request, @Query() q: PaginatedQuery) {
+    try {
+      const skip = Number(q.page * q.limit - q.limit);
+      const take = Number(q.limit);
+      const rooms = await this.roomService.findAll(user.userId, { skip, take });
       return {
         code: 200,
-        data: rooms,
+        ...rooms,
       };
     } catch (err) {
       return {

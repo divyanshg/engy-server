@@ -34,18 +34,21 @@ export class RoomService {
   }
 
   async createMany(createRoomsDto: CreateRoomDto[]) {
-    console.log(createRoomsDto);
-    const newRooms = await this.prisma.room.createMany({
-      data: createRoomsDto.map((createRoomDto) => ({
-        name: createRoomDto.name,
-        ownerId: createRoomDto.ownerId,
-        properties: {
-          create: {
-            name: 'occupants',
+    const newRooms = [];
+    for (const createRoomDto of createRoomsDto) {
+      const newRoom = await this.prisma.room.create({
+        data: {
+          name: createRoomDto.name,
+          ownerId: createRoomDto.ownerId,
+          properties: {
+            create: {
+              name: 'occupants',
+            },
           },
         },
-      })),
-    });
+      });
+      newRooms.push(newRoom);
+    }
 
     await this.prisma.user.update({
       where: {
